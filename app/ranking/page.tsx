@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db'
+import { sql, migrate } from '@/lib/db'
 import Link from 'next/link'
 import RankingList from '@/components/RankingList'
 
@@ -14,10 +14,10 @@ export interface RankingRow {
   premio_euros: number
 }
 
-export default function RankingPage() {
-  const db = getDb()
+export default async function RankingPage() {
+  await migrate()
 
-  const ranking = db.prepare(`
+  const { rows: ranking } = await sql<RankingRow>`
     SELECT
       p.user_name,
       COUNT(*) as total_palpites,
@@ -31,7 +31,7 @@ export default function RankingPage() {
     GROUP BY p.user_name
     HAVING SUM(p.points) > 0
     ORDER BY total_pontos DESC, placar_exato DESC, total_palpites DESC
-  `).all() as RankingRow[]
+  `
 
   return (
     <div className="space-y-6">

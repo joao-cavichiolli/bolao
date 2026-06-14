@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db'
+import { sql, migrate } from '@/lib/db'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -23,10 +23,10 @@ interface Palpite {
   points: number
 }
 
-export default function PalpitesPage() {
-  const db = getDb()
-  const games = db.prepare(`SELECT * FROM games ORDER BY game_date ASC`).all() as Game[]
-  const palpites = db.prepare(`SELECT * FROM palpites ORDER BY user_name ASC`).all() as Palpite[]
+export default async function PalpitesPage() {
+  await migrate()
+  const { rows: games } = await sql<Game>`SELECT * FROM games ORDER BY game_date ASC`
+  const { rows: palpites } = await sql<Palpite>`SELECT * FROM palpites ORDER BY user_name ASC`
 
   const palpitesByGame = palpites.reduce<Record<number, Palpite[]>>((acc, p) => {
     acc[p.game_id] = acc[p.game_id] ?? []

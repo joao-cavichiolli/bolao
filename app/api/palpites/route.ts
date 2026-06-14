@@ -1,31 +1,32 @@
-import { getDb } from '@/lib/db'
+import { sql, migrate } from '@/lib/db'
 
 export async function GET(request: Request) {
+  await migrate()
   const { searchParams } = new URL(request.url)
   const gameId = searchParams.get('game_id')
-  const db = getDb()
 
   if (gameId) {
-    const rows = db.prepare(`SELECT * FROM palpites WHERE game_id = ? ORDER BY created_at ASC`).all(gameId)
+    const { rows } = await sql`SELECT * FROM palpites WHERE game_id = ${gameId} ORDER BY created_at ASC`
     return Response.json(rows)
   }
 
-  const rows = db.prepare(`SELECT * FROM palpites ORDER BY created_at DESC`).all()
+  const { rows } = await sql`SELECT * FROM palpites ORDER BY created_at DESC`
   return Response.json(rows)
 }
 
 export async function DELETE(request: Request) {
+  await migrate()
   const { searchParams } = new URL(request.url)
   const userName = searchParams.get('user_name')
   if (!userName?.trim()) return Response.json({ error: 'user_name obrigatório' }, { status: 400 })
 
-  const db = getDb()
-  const result = db.prepare(`DELETE FROM palpites WHERE user_name = ?`).run(userName.trim())
-  if (result.changes === 0) return Response.json({ error: 'Usuário não encontrado' }, { status: 404 })
-  return Response.json({ ok: true, deleted: result.changes })
+  const { rowCount } = await sql`DELETE FROM palpites WHERE user_name = ${userName.trim()}`
+  if (!rowCount) return Response.json({ error: 'Usuário não encontrado' }, { status: 404 })
+  return Response.json({ ok: true, deleted: rowCount })
 }
 
 export async function POST(request: Request) {
+  await migrate()
   const body = await request.json()
   const { game_id, user_name, home_score, away_score } = body
 
@@ -33,24 +34,24 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Dados inválidos' }, { status: 400 })
   }
 
-  const db = getDb()
-
-  const game = db.prepare(`SELECT * FROM games WHERE id = ?`).get(game_id) as { status: string } | undefined
+  const { rows } = await sql`SELECT status FROM games WHERE id = ${game_id}`
+  const game = rows[0]
   if (!game) return Response.json({ error: 'Jogo não encontrado' }, { status: 404 })
   if (game.status === 'finished') return Response.json({ error: 'Jogo já encerrado' }, { status: 400 })
 
   try {
-    db.prepare(`
+    await sql`
       INSERT INTO palpites (game_id, user_name, home_score, away_score)
-      VALUES (?, ?, ?, ?)
+      VALUES (${game_id}, ${user_name.trim()}, ${parseInt(home_score)}, ${parseInt(away_score)})
       ON CONFLICT(game_id, user_name) DO UPDATE SET
-        home_score = excluded.home_score,
-        away_score = excluded.away_score,
-        created_at = datetime('now')
-    `).run(game_id, user_name.trim(), parseInt(home_score), parseInt(away_score))
-
-    const palpite = db.prepare(`SELECT * FROM palpites WHERE game_id = ? AND user_name = ?`).get(game_id, user_name.trim())
-    return Response.json(palpite, { status: 201 })
+        home_score = EXCLUDED.home_score,
+        away_score = EXCLUDED.away_score,
+        created_at = NOW()
+    `
+    const { rows: updated } = await sql`
+      SELECT * FROM palpites WHERE game_id = ${game_id} AND user_name = ${user_name.trim()}
+    `
+    return Response.json(updated[0], { status: 201 })
   } catch {
     return Response.json({ error: 'Erro ao salvar palpite' }, { status: 500 })
   }

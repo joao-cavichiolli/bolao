@@ -1,9 +1,7 @@
-import { getDb } from '@/lib/db'
+import { sql, migrate } from '@/lib/db'
 
 export async function GET() {
-  const db = getDb()
-  const games = db.prepare(`
-    SELECT * FROM games ORDER BY game_date ASC
-  `).all()
-  return Response.json(games)
+  await migrate()
+  const { rows } = await sql`SELECT * FROM games ORDER BY game_date ASC`
+  return Response.json(rows)
 }

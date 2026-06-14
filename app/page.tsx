@@ -1,4 +1,4 @@
-import { getDb } from '@/lib/db'
+import { sql, migrate } from '@/lib/db'
 import GameCard from '@/components/GameCard'
 import SyncButton from '@/components/SyncButton'
 
@@ -25,10 +25,10 @@ interface Palpite {
   away_score: number
 }
 
-export default function HomePage() {
-  const db = getDb()
-  const games = db.prepare(`SELECT * FROM games ORDER BY game_date ASC`).all() as Game[]
-  const palpites = db.prepare(`SELECT * FROM palpites`).all() as Palpite[]
+export default async function HomePage() {
+  await migrate()
+  const { rows: games } = await sql<Game>`SELECT * FROM games ORDER BY game_date ASC`
+  const { rows: palpites } = await sql<Palpite>`SELECT * FROM palpites`
 
   const palpitesByGame = palpites.reduce<Record<number, Palpite[]>>((acc, p) => {
     acc[p.game_id] = acc[p.game_id] ?? []
