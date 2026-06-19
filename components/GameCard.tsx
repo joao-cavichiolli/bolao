@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Game {
   id: number
@@ -36,6 +36,21 @@ export default function GameCard({ game, initialPalpites }: Props) {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [showPalpites, setShowPalpites] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+
+  const existingPalpite = palpites.find(
+    (p) => p.user_name.toLowerCase() === userName.trim().toLowerCase()
+  )
+
+  useEffect(() => {
+    if (existingPalpite) {
+      setHomeScore(String(existingPalpite.home_score))
+      setAwayScore(String(existingPalpite.away_score))
+      setIsEditing(true)
+    } else {
+      setIsEditing(false)
+    }
+  }, [existingPalpite?.user_name])
 
   const date = new Date(game.game_date)
   const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -59,9 +74,9 @@ export default function GameCard({ game, initialPalpites }: Props) {
 
     if (!res.ok) { setError(data.error); return }
 
-    setSuccess('Palpite salvo! ✅')
+    setSuccess(isEditing ? 'Palpite atualizado! ✅' : 'Palpite salvo! ✅')
     setPalpites((prev) => {
-      const idx = prev.findIndex((p) => p.user_name === userName.trim())
+      const idx = prev.findIndex((p) => p.user_name.toLowerCase() === userName.trim().toLowerCase())
       if (idx >= 0) {
         const updated = [...prev]
         updated[idx] = data
@@ -69,8 +84,6 @@ export default function GameCard({ game, initialPalpites }: Props) {
       }
       return [...prev, data]
     })
-    setHomeScore('')
-    setAwayScore('')
   }
 
   const statusColor = {
@@ -119,12 +132,23 @@ export default function GameCard({ game, initialPalpites }: Props) {
       {/* Palpite form */}
       {game.status === 'upcoming' && (
         <form onSubmit={submit} className="border-t border-gray-800 px-4 py-4 space-y-3">
-          <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">Seu palpite</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+              {isEditing ? '✏️ Editar palpite' : 'Seu palpite'}
+            </p>
+            {isEditing && (
+              <span className="text-xs text-yellow-500">Palpite atual: {existingPalpite!.home_score}x{existingPalpite!.away_score}</span>
+            )}
+          </div>
           <input
             type="text"
             placeholder="Seu nome"
             value={userName}
-            onChange={(e) => setUserName(e.target.value)}
+            onChange={(e) => {
+              setUserName(e.target.value)
+              setSuccess('')
+              setError('')
+            }}
             className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
             maxLength={40}
           />
@@ -156,7 +180,7 @@ export default function GameCard({ game, initialPalpites }: Props) {
             disabled={loading}
             className="w-full bg-yellow-400 hover:bg-yellow-300 text-green-900 font-bold py-2 rounded-lg transition-colors disabled:opacity-50"
           >
-            {loading ? 'Salvando...' : 'Registrar palpite'}
+            {loading ? 'Salvando...' : isEditing ? 'Atualizar palpite' : 'Registrar palpite'}
           </button>
         </form>
       )}
@@ -175,18 +199,35 @@ export default function GameCard({ game, initialPalpites }: Props) {
               {palpites.map((p) => (
                 <li key={p.id} className="flex items-center justify-between text-sm">
                   <span className="text-gray-300">{p.user_name}</span>
-                  <span className="font-mono text-yellow-300">
-                    {p.home_score} x {p.away_score}
-                    {game.status === 'finished' && (
-                      <span className="ml-2 text-xs text-gray-400">
-                        {p.home_score === game.home_score && p.away_score === game.away_score
-                          ? '🏆 +3'
-                          : Math.sign(p.home_score - p.away_score) === Math.sign((game.home_score ?? 0) - (game.away_score ?? 0))
-                          ? '✅ +1'
-                          : '❌ +0'}
-                      </span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-yellow-300">
+                      {p.home_score} x {p.away_score}
+                      {game.status === 'finished' && (
+                        <span className="ml-2 text-xs text-gray-400">
+                          {p.home_score === game.home_score && p.away_score === game.away_score
+                            ? '🏆 +3'
+                            : Math.sign(p.home_score - p.away_score) === Math.sign((game.home_score ?? 0) - (game.away_score ?? 0))
+                            ? '✅ +1'
+                            : '❌ +0'}
+                        </span>
+                      )}
+                    </span>
+                    {game.status === 'upcoming' && (
+                      <button
+                        onClick={() => {
+                          setUserName(p.user_name)
+                          setHomeScore(String(p.home_score))
+                          setAwayScore(String(p.away_score))
+                          setSuccess('')
+                          setError('')
+                        }}
+                        className="text-gray-500 hover:text-yellow-400 transition-colors"
+                        title="Editar palpite"
+                      >
+                        ✏️
+                      </button>
                     )}
-                  </span>
+                  </div>
                 </li>
               ))}
             </ul>
