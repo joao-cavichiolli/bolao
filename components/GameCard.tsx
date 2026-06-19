@@ -84,6 +84,10 @@ export default function GameCard({ game, initialPalpites }: Props) {
       }
       return [...prev, data]
     })
+    setUserName('')
+    setHomeScore('')
+    setAwayScore('')
+    setShowPalpites(true)
   }
 
   const statusColor = {
