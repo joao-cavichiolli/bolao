@@ -206,14 +206,8 @@ export default function GameCard({ game, initialPalpites }: Props) {
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-yellow-300">
                       {p.home_score} x {p.away_score}
-                      {game.status === 'finished' && (
-                        <span className="ml-2 text-xs text-gray-400">
-                          {p.home_score === game.home_score && p.away_score === game.away_score
-                            ? '🏆 +3'
-                            : Math.sign(p.home_score - p.away_score) === Math.sign((game.home_score ?? 0) - (game.away_score ?? 0))
-                            ? '✅ +1'
-                            : '❌ +0'}
-                        </span>
+                      {game.status === 'finished' && p.home_score === game.home_score && p.away_score === game.away_score && (
+                        <span className="ml-1">🏆</span>
                       )}
                     </span>
                     {game.status === 'upcoming' && (
