@@ -36,8 +36,8 @@ export default async function HomePage() {
     return acc
   }, {})
 
-  const upcoming = games.filter((g) => g.status === 'upcoming')
-  const finished = games.filter((g) => g.status === 'finished')
+  const upcoming = games.filter((g) => g.status === 'upcoming').slice(0, 2)
+  const finished = games.filter((g) => g.status === 'finished').slice(-1)
 
   return (
     <div className="space-y-8">
