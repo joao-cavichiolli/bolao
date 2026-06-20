@@ -66,20 +66,15 @@ export default async function PalpitesPage() {
               <div className="bg-gray-900 rounded-xl border border-gray-800 divide-y divide-gray-800">
                 {lista.map((p) => {
                   const isExact = game.status === 'finished' && p.home_score === game.home_score && p.away_score === game.away_score
-                  const isRight = game.status === 'finished' && !isExact && p.points === 1
-                  const isWrong = game.status === 'finished' && p.points === 0
 
                   return (
                     <div key={p.id} className="flex items-center justify-between px-4 py-3">
                       <span className="text-sm text-gray-300">{p.user_name}</span>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <span className="font-mono font-bold text-white">
                           {p.home_score} x {p.away_score}
                         </span>
-                        {isExact && <span className="text-xs text-yellow-400">🏆 Placar exato</span>}
-                        {isRight && <span className="text-xs text-green-400">✅ Resultado certo</span>}
-                        {isWrong && <span className="text-xs text-red-400">❌ Errou</span>}
-                        {game.status === 'upcoming' && <span className="text-xs text-gray-500">Em aberto</span>}
+                        {isExact && <span>🏆</span>}
                       </div>
                     </div>
                   )
