@@ -18,12 +18,8 @@ const BRAZIL_TEAM_ID = '134496'
 
 export async function fetchBrazilGames(): Promise<SportsDBEvent[]> {
   const [nextRes, lastRes] = await Promise.allSettled([
-    fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=${BRAZIL_TEAM_ID}`, {
-      next: { revalidate: 3600 },
-    }),
-    fetch(`https://www.thesportsdb.com/api/v1/json/3/eventslast.php?id=${BRAZIL_TEAM_ID}`, {
-      next: { revalidate: 3600 },
-    }),
+    fetch(`https://www.thesportsdb.com/api/v1/json/3/eventsnext.php?id=${BRAZIL_TEAM_ID}`, { cache: 'no-store' }),
+    fetch(`https://www.thesportsdb.com/api/v1/json/3/eventslast.php?id=${BRAZIL_TEAM_ID}`, { cache: 'no-store' }),
   ])
 
   const events: SportsDBEvent[] = []
