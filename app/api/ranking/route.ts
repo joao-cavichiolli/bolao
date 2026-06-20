@@ -10,9 +10,14 @@ export async function GET() {
       SUM(CASE WHEN p.points = 1 THEN 1 ELSE 0 END) as resultado_certo,
       SUM(CASE WHEN p.points = 0 AND g.status = 'finished' THEN 1 ELSE 0 END) as erros,
       SUM(p.points) as total_pontos,
-      SUM(CASE WHEN p.points = 3 THEN g.pot_euros ELSE 0 END) as premio_euros
+      SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END) as premio_euros
     FROM palpites p
     JOIN games g ON g.id = p.game_id
+    JOIN (
+      SELECT game_id, COUNT(*) as winner_count
+      FROM palpites WHERE points = 3
+      GROUP BY game_id
+    ) w ON w.game_id = p.game_id
     GROUP BY p.user_name
     HAVING SUM(CASE WHEN p.points = 3 THEN 1 ELSE 0 END) > 0
     ORDER BY placar_exato DESC, total_pontos DESC
