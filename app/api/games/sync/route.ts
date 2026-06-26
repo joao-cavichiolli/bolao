@@ -16,9 +16,9 @@ export async function POST() {
         INSERT INTO games (external_id, home_team, away_team, home_flag, away_flag, competition, game_date, home_score, away_score, status)
         VALUES (${e.idEvent}, ${e.strHomeTeam}, ${e.strAwayTeam}, ${e.strHomeTeamBadge ?? null}, ${e.strAwayTeamBadge ?? null}, ${e.strLeague}, ${gameDate}, ${homeScore}, ${awayScore}, ${status})
         ON CONFLICT(external_id) DO UPDATE SET
-          home_score = EXCLUDED.home_score,
-          away_score = EXCLUDED.away_score,
-          status = EXCLUDED.status
+          home_score = COALESCE(EXCLUDED.home_score, games.home_score),
+          away_score = COALESCE(EXCLUDED.away_score, games.away_score),
+          status = CASE WHEN games.status = 'finished' THEN 'finished' ELSE EXCLUDED.status END
       `
     }
 
