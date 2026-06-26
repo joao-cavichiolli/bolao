@@ -32,6 +32,12 @@ export async function migrate() {
   `
   await sql`CREATE INDEX IF NOT EXISTS idx_palpites_game ON palpites(game_id)`
   await sql`CREATE INDEX IF NOT EXISTS idx_palpites_user ON palpites(user_name)`
+  await sql`
+    CREATE TABLE IF NOT EXISTS user_aliases (
+      alias_name TEXT PRIMARY KEY,
+      canonical_name TEXT NOT NULL
+    )
+  `
 }
 
 export { sql }

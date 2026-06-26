@@ -1,6 +1,7 @@
 import { sql, migrate } from '@/lib/db'
 import Link from 'next/link'
 import RankingList from '@/components/RankingList'
+import SaldoDevedor from '@/components/SaldoDevedor'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +13,19 @@ export interface RankingRow {
   erros: number
   total_pontos: number
   premio_euros: number
+}
+
+interface SaldoRow {
+  nome: string
+  jogos: number
+  devido: number
+  ganhou: number
+  saldo: number
+}
+
+interface AliasRow {
+  alias_name: string
+  canonical_name: string
 }
 
 export default async function RankingPage() {
@@ -38,8 +52,30 @@ export default async function RankingPage() {
     ORDER BY placar_exato DESC, total_pontos DESC
   `
 
+  const { rows: saldo } = await sql<SaldoRow>`
+    SELECT
+      COALESCE(ua.canonical_name, p.user_name) as nome,
+      COUNT(DISTINCT p.game_id) as jogos,
+      COUNT(DISTINCT p.game_id) as devido,
+      COALESCE(SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END), 0) as ganhou,
+      COALESCE(SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END), 0) - COUNT(DISTINCT p.game_id) as saldo
+    FROM palpites p
+    JOIN games g ON g.id = p.game_id
+    LEFT JOIN user_aliases ua ON ua.alias_name = p.user_name
+    LEFT JOIN (
+      SELECT game_id, COUNT(*) as winner_count FROM palpites WHERE points = 3 GROUP BY game_id
+    ) w ON w.game_id = p.game_id
+    GROUP BY COALESCE(ua.canonical_name, p.user_name)
+    ORDER BY saldo ASC
+  `
+
+  const { rows: aliases } = await sql<AliasRow>`SELECT alias_name, canonical_name FROM user_aliases ORDER BY canonical_name`
+
+  const { rows: namesRows } = await sql<{ user_name: string }>`SELECT DISTINCT user_name FROM palpites ORDER BY user_name`
+  const allNames = namesRows.map((r) => r.user_name)
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <div>
         <h1 className="text-3xl font-black text-yellow-400">🏆 Ranking</h1>
       </div>
@@ -55,6 +91,8 @@ export default async function RankingPage() {
       ) : (
         <RankingList initialRanking={ranking} />
       )}
+
+      <SaldoDevedor initialSaldo={saldo} initialAliases={aliases} allNames={allNames} />
 
       <div className="text-center">
         <Link href="/" className="text-sm text-green-400 hover:underline">
