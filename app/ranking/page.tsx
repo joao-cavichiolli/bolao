@@ -62,21 +62,28 @@ export default async function RankingPage() {
 
   const { rows: saldo } = await sql<SaldoRow>`
     SELECT
-      COALESCE(ua.canonical_name, p.user_name) as nome,
-      COUNT(DISTINCT p.game_id) as jogos,
-      COUNT(DISTINCT p.game_id) as devido,
-      COALESCE(SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END), 0) as ganhou,
-      COALESCE((SELECT SUM(pm.amount) FROM payments pm WHERE pm.nome = COALESCE(ua.canonical_name, p.user_name)), 0) as pago,
-      COALESCE(SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END), 0)
-        - COUNT(DISTINCT p.game_id)
-        - COALESCE((SELECT SUM(pm.amount) FROM payments pm WHERE pm.nome = COALESCE(ua.canonical_name, p.user_name)), 0) as saldo
-    FROM palpites p
-    JOIN games g ON g.id = p.game_id
-    LEFT JOIN user_aliases ua ON ua.alias_name = p.user_name
+      base.nome,
+      base.jogos,
+      base.jogos as devido,
+      base.ganhou,
+      COALESCE(pay.pago, 0) as pago,
+      base.ganhou - base.jogos - COALESCE(pay.pago, 0) as saldo
+    FROM (
+      SELECT
+        COALESCE(ua.canonical_name, p.user_name) as nome,
+        COUNT(DISTINCT p.game_id) as jogos,
+        COALESCE(SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END), 0) as ganhou
+      FROM palpites p
+      JOIN games g ON g.id = p.game_id
+      LEFT JOIN user_aliases ua ON ua.alias_name = p.user_name
+      LEFT JOIN (
+        SELECT game_id, COUNT(*) as winner_count FROM palpites WHERE points = 3 GROUP BY game_id
+      ) w ON w.game_id = p.game_id
+      GROUP BY COALESCE(ua.canonical_name, p.user_name)
+    ) base
     LEFT JOIN (
-      SELECT game_id, COUNT(*) as winner_count FROM palpites WHERE points = 3 GROUP BY game_id
-    ) w ON w.game_id = p.game_id
-    GROUP BY COALESCE(ua.canonical_name, p.user_name)
+      SELECT nome, SUM(amount) as pago FROM payments GROUP BY nome
+    ) pay ON pay.nome = base.nome
     ORDER BY saldo ASC
   `
 
