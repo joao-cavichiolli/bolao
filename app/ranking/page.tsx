@@ -20,12 +20,20 @@ interface SaldoRow {
   jogos: number
   devido: number
   ganhou: number
+  pago: number
   saldo: number
 }
 
 interface AliasRow {
   alias_name: string
   canonical_name: string
+}
+
+interface PaymentRow {
+  id: number
+  nome: string
+  amount: number
+  notes: string | null
 }
 
 export default async function RankingPage() {
@@ -58,7 +66,10 @@ export default async function RankingPage() {
       COUNT(DISTINCT p.game_id) as jogos,
       COUNT(DISTINCT p.game_id) as devido,
       COALESCE(SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END), 0) as ganhou,
-      COALESCE(SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END), 0) - COUNT(DISTINCT p.game_id) as saldo
+      COALESCE((SELECT SUM(pm.amount) FROM payments pm WHERE pm.nome = COALESCE(ua.canonical_name, p.user_name)), 0) as pago,
+      COALESCE(SUM(CASE WHEN p.points = 3 THEN g.pot_euros::numeric / w.winner_count ELSE 0 END), 0)
+        - COUNT(DISTINCT p.game_id)
+        - COALESCE((SELECT SUM(pm.amount) FROM payments pm WHERE pm.nome = COALESCE(ua.canonical_name, p.user_name)), 0) as saldo
     FROM palpites p
     JOIN games g ON g.id = p.game_id
     LEFT JOIN user_aliases ua ON ua.alias_name = p.user_name
@@ -70,6 +81,8 @@ export default async function RankingPage() {
   `
 
   const { rows: aliases } = await sql<AliasRow>`SELECT alias_name, canonical_name FROM user_aliases ORDER BY canonical_name`
+
+  const { rows: payments } = await sql<PaymentRow>`SELECT id, nome, amount, notes FROM payments ORDER BY created_at DESC`
 
   const { rows: namesRows } = await sql<{ user_name: string }>`SELECT DISTINCT user_name FROM palpites ORDER BY user_name`
   const allNames = namesRows.map((r) => r.user_name)
@@ -92,7 +105,7 @@ export default async function RankingPage() {
         <RankingList initialRanking={ranking} />
       )}
 
-      <SaldoDevedor initialSaldo={saldo} initialAliases={aliases} allNames={allNames} />
+      <SaldoDevedor initialSaldo={saldo} initialAliases={aliases} initialPayments={payments} allNames={allNames} />
 
       <div className="text-center">
         <Link href="/" className="text-sm text-green-400 hover:underline">

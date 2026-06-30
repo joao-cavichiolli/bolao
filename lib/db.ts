@@ -38,6 +38,15 @@ export async function migrate() {
       canonical_name TEXT NOT NULL
     )
   `
+  await sql`
+    CREATE TABLE IF NOT EXISTS payments (
+      id SERIAL PRIMARY KEY,
+      nome TEXT NOT NULL,
+      amount NUMERIC NOT NULL,
+      notes TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `
 }
 
 export { sql }
