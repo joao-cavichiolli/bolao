@@ -57,7 +57,7 @@ export async function fetchBrazilGames(): Promise<SportsDBEvent[]> {
 
 export function mapStatus(event: SportsDBEvent): 'upcoming' | 'finished' | 'live' {
   if (event.strStatus === 'Match Finished') return 'finished'
-  if (event.intHomeScore !== null && event.intAwayScore !== null) return 'live'
+  if (event.intHomeScore !== null && event.intAwayScore !== null) return 'finished'
   return 'upcoming'
 }
 

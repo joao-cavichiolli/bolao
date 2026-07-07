@@ -18,7 +18,7 @@ export async function POST() {
         ON CONFLICT(external_id) DO UPDATE SET
           home_score = COALESCE(EXCLUDED.home_score, games.home_score),
           away_score = COALESCE(EXCLUDED.away_score, games.away_score),
-          status = CASE WHEN games.status = 'finished' AND EXCLUDED.status = 'upcoming' THEN 'finished' ELSE EXCLUDED.status END
+          status = CASE WHEN games.status = 'finished' THEN 'finished' ELSE EXCLUDED.status END
       `
     }
 
