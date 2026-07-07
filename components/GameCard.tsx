@@ -134,7 +134,7 @@ export default function GameCard({ game, initialPalpites }: Props) {
       </div>
 
       {/* Palpite form */}
-      {game.status === 'upcoming' && (
+      {(game.status === 'upcoming' || game.status === 'live') && (
         <form onSubmit={submit} className="border-t border-gray-800 px-4 py-4 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
@@ -210,7 +210,7 @@ export default function GameCard({ game, initialPalpites }: Props) {
                         <span className="ml-1">🏆</span>
                       )}
                     </span>
-                    {game.status === 'upcoming' && (
+                    {(game.status === 'upcoming' || game.status === 'live') && (
                       <button
                         onClick={() => {
                           setUserName(p.user_name)
