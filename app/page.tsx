@@ -36,7 +36,7 @@ export default async function HomePage() {
     return acc
   }, {})
 
-  const upcoming = games.filter((g) => g.status === 'upcoming' || g.status === 'live')
+  const upcoming = games.filter((g) => g.status === 'upcoming' || g.status === 'live').slice(0, 2)
   const allFinished = games.filter((g) => g.status === 'finished')
   const lastBrazilFinished = allFinished.filter(
     (g) => g.home_team === 'Brazil' || g.away_team === 'Brazil'
