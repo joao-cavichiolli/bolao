@@ -37,11 +37,7 @@ export default async function HomePage() {
   }, {})
 
   const upcoming = games.filter((g) => g.status === 'upcoming' || g.status === 'live').slice(0, 2)
-  const allFinished = games.filter((g) => g.status === 'finished')
-  const lastBrazilFinished = allFinished.filter(
-    (g) => g.home_team === 'Brazil' || g.away_team === 'Brazil'
-  ).slice(-1)
-  const finished = lastBrazilFinished.length > 0 ? lastBrazilFinished : allFinished.slice(-1)
+  const finished = games.filter((g) => g.status === 'finished').slice(-1)
 
   return (
     <div className="space-y-8">
