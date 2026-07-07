@@ -47,7 +47,7 @@ export default async function HomePage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-black text-yellow-400">Seleção Brasileira 🇧🇷</h1>
+          <h1 className="text-3xl font-black text-yellow-400">Copa do Mundo 2026 🏆</h1>
           <p className="text-gray-400 mt-1">Faça seu palpite e dispute o ranking!</p>
         </div>
         <SyncButton />

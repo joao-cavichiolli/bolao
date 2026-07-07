@@ -6,8 +6,8 @@ import Nav from '@/components/Nav'
 const geist = Geist({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Bolão Brasil 🇧🇷',
-  description: 'Palpites e ranking dos jogos da Seleção Brasileira',
+  title: 'Bolão Copa',
+  description: 'Palpites e ranking dos jogos da Copa do Mundo 2026',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

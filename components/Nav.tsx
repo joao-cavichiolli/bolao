@@ -9,8 +9,8 @@ export default function Nav() {
     <header className="bg-green-800 border-b border-green-700 shadow-lg">
       <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-2xl">🇧🇷</span>
-          <span className="font-bold text-xl text-yellow-400">Bolão Brasil</span>
+          <span className="text-2xl">🏆</span>
+          <span className="font-bold text-xl text-yellow-400">Bolão Copa</span>
         </Link>
         <nav className="flex gap-2">
           <Link
