@@ -37,6 +37,23 @@ export default function GameCard({ game, initialPalpites }: Props) {
   const [success, setSuccess] = useState('')
   const [showPalpites, setShowPalpites] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [closeHome, setCloseHome] = useState('')
+  const [closeAway, setCloseAway] = useState('')
+  const [closing, setClosing] = useState(false)
+  const [showClose, setShowClose] = useState(false)
+
+  async function closeGame(e: React.FormEvent) {
+    e.preventDefault()
+    if (closeHome === '' || closeAway === '') return
+    setClosing(true)
+    await fetch('/api/games/close', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ game_id: game.id, home_score: Number(closeHome), away_score: Number(closeAway) }),
+    })
+    setClosing(false)
+    window.location.reload()
+  }
 
   const existingPalpite = palpites.find(
     (p) => p.user_name.toLowerCase() === userName.trim().toLowerCase()
@@ -187,6 +204,27 @@ export default function GameCard({ game, initialPalpites }: Props) {
             {loading ? 'Salvando...' : isEditing ? 'Atualizar palpite' : 'Registrar palpite'}
           </button>
         </form>
+      )}
+
+      {/* Close game (admin) */}
+      {game.status === 'live' && (
+        <div className="border-t border-gray-800 px-4 py-3">
+          <button onClick={() => setShowClose(v => !v)} className="text-xs text-gray-500 hover:text-red-400 transition-colors">
+            🔒 Encerrar jogo manualmente
+          </button>
+          {showClose && (
+            <form onSubmit={closeGame} className="mt-2 flex items-center gap-2">
+              <input type="number" min={0} max={99} placeholder="0" value={closeHome} onChange={e => setCloseHome(e.target.value)}
+                className="w-16 bg-gray-800 rounded px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+              <span className="text-gray-500 text-sm">x</span>
+              <input type="number" min={0} max={99} placeholder="0" value={closeAway} onChange={e => setCloseAway(e.target.value)}
+                className="w-16 bg-gray-800 rounded px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+              <button type="submit" disabled={closing} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-3 py-1 rounded disabled:opacity-50">
+                {closing ? '...' : 'Encerrar'}
+              </button>
+            </form>
+          )}
+        </div>
       )}
 
       {/* Palpites list toggle */}
