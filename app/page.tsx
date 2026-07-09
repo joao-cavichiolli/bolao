@@ -27,7 +27,7 @@ interface Palpite {
 
 export default async function HomePage() {
   await migrate()
-  const { rows: games } = await sql<Game>`SELECT * FROM games ORDER BY game_date ASC`
+  const { rows: games } = await sql<Game>`SELECT * FROM games WHERE competition ILIKE '%world cup%' ORDER BY game_date ASC`
   const { rows: palpites } = await sql<Palpite>`SELECT * FROM palpites`
 
   const palpitesByGame = palpites.reduce<Record<number, Palpite[]>>((acc, p) => {
