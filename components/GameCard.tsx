@@ -11,6 +11,7 @@ interface Game {
   game_date: string
   home_score: number | null
   away_score: number | null
+  pot_euros: number
   status: 'upcoming' | 'finished' | 'live'
 }
 
@@ -20,14 +21,16 @@ interface Palpite {
   user_name: string
   home_score: number
   away_score: number
+  points?: number
 }
 
 interface Props {
   game: Game
   initialPalpites: Palpite[]
+  upcomingGames?: { id: number; home_team: string; away_team: string }[]
 }
 
-export default function GameCard({ game, initialPalpites }: Props) {
+export default function GameCard({ game, initialPalpites, upcomingGames = [] }: Props) {
   const [palpites, setPalpites] = useState(initialPalpites)
   const [userName, setUserName] = useState('')
   const [homeScore, setHomeScore] = useState('')
@@ -41,6 +44,24 @@ export default function GameCard({ game, initialPalpites }: Props) {
   const [closeAway, setCloseAway] = useState('')
   const [closing, setClosing] = useState(false)
   const [showClose, setShowClose] = useState(false)
+  const [rolloverTo, setRolloverTo] = useState('')
+  const [rolling, setRolling] = useState(false)
+
+  const hasWinner = palpites.some((p) => p.points === 3)
+  const pot = game.pot_euros ?? 0
+  const showRollover = game.status === 'finished' && !hasWinner && pot > 0 && upcomingGames.length > 0
+
+  async function doRollover() {
+    if (!rolloverTo) return
+    setRolling(true)
+    await fetch('/api/games/rollover', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from_game_id: game.id, to_game_id: Number(rolloverTo) }),
+    })
+    setRolling(false)
+    window.location.reload()
+  }
 
   async function closeGame(e: React.FormEvent) {
     e.preventDefault()
@@ -224,6 +245,26 @@ export default function GameCard({ game, initialPalpites }: Props) {
               </button>
             </form>
           )}
+        </div>
+      )}
+
+      {/* Rollover pot */}
+      {showRollover && (
+        <div className="border-t border-gray-800 px-4 py-3 space-y-2">
+          <p className="text-xs text-orange-400 font-medium">🔄 Nenhum vencedor — pote de €{pot} disponível para acumular</p>
+          <div className="flex gap-2 items-center">
+            <select value={rolloverTo} onChange={e => setRolloverTo(e.target.value)}
+              className="flex-1 bg-gray-800 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400">
+              <option value="">Acumular para...</option>
+              {upcomingGames.map(g => (
+                <option key={g.id} value={g.id}>{g.home_team} x {g.away_team}</option>
+              ))}
+            </select>
+            <button onClick={doRollover} disabled={rolling || !rolloverTo}
+              className="bg-orange-500 hover:bg-orange-400 text-white font-bold text-xs px-3 py-1 rounded disabled:opacity-50">
+              {rolling ? '...' : 'Acumular'}
+            </button>
+          </div>
         </div>
       )}
 

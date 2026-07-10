@@ -14,6 +14,7 @@ interface Game {
   game_date: string
   home_score: number | null
   away_score: number | null
+  pot_euros: number
   status: 'upcoming' | 'finished' | 'live'
 }
 
@@ -23,12 +24,13 @@ interface Palpite {
   user_name: string
   home_score: number
   away_score: number
+  points: number
 }
 
 export default async function HomePage() {
   await migrate()
   const { rows: games } = await sql<Game>`SELECT * FROM games WHERE competition ILIKE '%world cup%' ORDER BY game_date ASC`
-  const { rows: palpites } = await sql<Palpite>`SELECT * FROM palpites`
+  const { rows: palpites } = await sql<Palpite>`SELECT id, game_id, user_name, home_score, away_score, points FROM palpites`
 
   const palpitesByGame = palpites.reduce<Record<number, Palpite[]>>((acc, p) => {
     acc[p.game_id] = acc[p.game_id] ?? []
@@ -77,7 +79,7 @@ export default async function HomePage() {
           </h2>
           <div className="space-y-4">
             {finished.map((game) => (
-              <GameCard key={game.id} game={game} initialPalpites={palpitesByGame[game.id] ?? []} />
+              <GameCard key={game.id} game={game} initialPalpites={palpitesByGame[game.id] ?? []} upcomingGames={upcoming.map(g => ({ id: g.id, home_team: g.home_team, away_team: g.away_team }))} />
             ))}
           </div>
         </section>
